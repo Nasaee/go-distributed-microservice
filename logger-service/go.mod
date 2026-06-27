@@ -1,4 +1,4 @@
-module authentication
+module logger
 
 go 1.26.4
 

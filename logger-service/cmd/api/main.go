@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"authentication/data"
+	"logger/data"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -21,7 +21,7 @@ type Application struct {
 }
 
 func main() {
-	log.Println("Starting Authentication Service")
+	log.Println("Starting logger Service")
 
 	db := connectToDB()
 	if db == nil {
@@ -33,14 +33,12 @@ func main() {
 		Models: data.New(db),
 	}
 
-	
-
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%s", webPort),
 		Handler: app.routes(),
 	}
 
-	log.Printf("Starting authentication service on port %s", webPort)
+	log.Printf("Starting logger service on port %s", webPort)
 
 	err := server.ListenAndServe()
 	if err != nil {

@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func (app *Application) authentication(w http.ResponseWriter, r *http.Request) {
+func (app *Application) logger(w http.ResponseWriter, r *http.Request) {
 	var requestPayload struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
