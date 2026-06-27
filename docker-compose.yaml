@@ -1,0 +1,58 @@
+services:
+  broker:
+    build:
+      context: ./broker-service
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - authentication
+  authentication:
+    build:
+      context: ./authentication-service
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      - DSN=host=postgres port=5432 user=postgres password=secretpassword dbname=users sslmode=disable connect_timeout=5
+    depends_on:
+      - postgres
+
+  logger:
+    build:
+      context: ./logger-service
+    restart: always
+    ports:
+      - "8082:8082"
+    environment:
+      - MONGO_URI=mongodb://admin:password@mongo:27017/?authSource=admin
+      - MONGO_DB=logs
+    depends_on:
+      - mongo
+
+  postgres:
+    image: postgres:18.3
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=secretpassword
+      - POSTGRES_DB=users
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+  mongo:
+    image: mongo
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  postgres_data:
+  mongo_data:
