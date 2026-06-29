@@ -1,42 +1,35 @@
 package main
 
 import (
-	"errors"
-	"fmt"
 	"net/http"
+
+	"logger/data"
 )
 
-func (app *Application) logger(w http.ResponseWriter, r *http.Request) {
-	var requestPayload struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
+type RequestPayload struct {
+	Name string `json:"name"`
+	Data string `json:"data"`
+}
+
+func (app *Application) WriteLog(w http.ResponseWriter, r *http.Request) {
+	var requestPayload RequestPayload
+	_ = app.readJSON(w, r, &requestPayload)
+
+	event := data.LogEntry{
+		Name: requestPayload.Name,
+		Data: requestPayload.Data,
 	}
 
-	err := app.readJSON(w, r, &requestPayload)
+	err := app.Models.LogEntry.Insert(event)
 	if err != nil {
 		app.errorJSON(w, err, http.StatusBadRequest)
 		return
 	}
-	user, err := app.Models.User.GetByEmail(requestPayload.Email)
-	if err != nil {
-		app.errorJSON(w, errors.New("invalid credentials"), http.StatusUnauthorized)
-		return
-	}
 
-	valid, err := user.PasswordMatches(requestPayload.Password)
-	if err != nil || !valid {
-		app.errorJSON(w, errors.New("invalid credentials"), http.StatusUnauthorized)
-		return
-	}
-
-	payload := JsonResponse{
+	reponse := JsonResponse{
 		Error:   false,
-		Message: fmt.Sprintf("Logged in user %s", user.Email),
-		Data:    user,
+		Message: "Logged",
 	}
 
-	err = app.writeJSON(w, http.StatusAccepted, payload)
-	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-	}
+	app.writeJSON(w, http.StatusAccepted, reponse)
 }

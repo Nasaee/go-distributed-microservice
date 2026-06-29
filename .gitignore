@@ -30,7 +30,6 @@ go.work.sum
 
 # Docker volumes / data
 pgdata/
-data/
 
 # Logs
 *.log

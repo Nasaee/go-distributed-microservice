@@ -1,7 +1,7 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,12 +11,14 @@ import (
 	"logger/data"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-const webPort = "8081"
+const webPort = "8082"
 
 type Application struct {
-	DB     *sql.DB
+	DB     *mongo.Client
 	Models data.Models
 }
 
@@ -25,7 +27,7 @@ func main() {
 
 	db := connectToDB()
 	if db == nil {
-		log.Fatal("Couldnot connect to Postgres")
+		log.Fatal("Couldnot connect to Mongo")
 	}
 
 	app := Application{
@@ -46,18 +48,28 @@ func main() {
 	}
 }
 
-func connectToDB() *sql.DB {
-	dsn := os.Getenv("DSN")
+func connectToDB() *mongo.Client {
+	uri := os.Getenv("MONGO_URI")
 
-	// Retry/Polling Mechanism เพื่อรอให้ Postgres พร้อมใช้งานอย่างสมบูรณ์ก่อนที่จะเริ่มทำงาน
 	for range 10 {
-		db, err := sql.Open("pgx", dsn)
-		if err == nil && db.Ping() == nil {
-			log.Println("Connected to Postgres!")
-			return db
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+
+		client, err := mongo.Connect(options.Client().ApplyURI(uri))
+		if err == nil {
+			err = client.Ping(ctx, nil)
+			cancel()
+
+			if err == nil {
+				log.Println("Conncted to Mongo")
+				return client
+			}
 		}
-		log.Println("Waiting for postgres")
-		time.Sleep(time.Second * 2)
+
+		cancel()
+
+		log.Println("Waiting for Mongo")
+		time.Sleep(2 * time.Second)
 	}
+
 	return nil
 }
