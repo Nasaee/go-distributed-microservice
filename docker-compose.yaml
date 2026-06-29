@@ -53,6 +53,26 @@ services:
     volumes:
       - mongo_data:/data/db
 
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+  mailer:
+    build:
+      context: ./mailer-service
+    restart: always
+    environment:
+      MAIL_DOMAIN: localhost
+      MAIL_HOST: mailhog
+      MAIL_PORT: 1025
+      MAIL_ENCRYPTION: none
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
+      MAIL_FROMNAME: "John Smith"
+      MAIL_FROMADDRESS: john.smith@example.com
+
 volumes:
   postgres_data:
   mongo_data:
